@@ -7,6 +7,7 @@ package com.brian.mpesa.tx;
 
 import com.brian.db.DBConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -24,7 +25,7 @@ public class B2C {
     public List<B2CUtils> B2CAInitiator() {
 
         List<B2CUtils> list = new ArrayList<B2CUtils>();
-        B2CUtils b2cUtils = null;
+        //B2CUtils b2cUtils = null;
         Connection con = null;
         try {
             con = DBConnector.getMysqlDBConnection();
@@ -32,7 +33,7 @@ public class B2C {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(b2cTransaction);
             while (rs.next()) {
-                b2cUtils = new B2CUtils();
+                B2CUtils b2cUtils = new B2CUtils();
                 b2cUtils.InitiatorName = rs.getString("initiatorname");
                 b2cUtils.SecurityCredential = rs.getString("securitycredential");
                 b2cUtils.CommandID = rs.getString("commandid");
@@ -44,9 +45,15 @@ public class B2C {
                 b2cUtils.ResultURL = rs.getString("resulturl");
                 b2cUtils.Occassion = rs.getString("occassion");
                 list.add(b2cUtils);
+
+                Gson gson = new Gson();
+                String getall = null;
+                getall = gson.toJson(b2cUtils);
+                System.out.println("GSON JSON::"+ getall);
                 ObjectMapper mapper = new ObjectMapper();
-                String b2cJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(b2cUtils);
-                System.out.print(b2cJson);
+                 
+                //String b2cJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(b2cUtils);
+               // System.out.print(b2cJson);
             }
         } catch (Exception e) {
         }
