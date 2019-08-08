@@ -5,7 +5,7 @@
  */
 package com.brian.mpesa.runner;
 
-import com.brian.mpesa.tx.B2C;
+import com.brian.mpesa.tx.MpesaAPI;
 
 /**
  *
@@ -13,8 +13,8 @@ import com.brian.mpesa.tx.B2C;
  */
 public class Runner {
     public static void main(String[] args) {
-        B2C  b2c = new B2C();
-        b2c.B2CAInitiator();
+        MpesaAPI  mpesa = new MpesaAPI();
+        mpesa.B2C();
     }
     
 }
