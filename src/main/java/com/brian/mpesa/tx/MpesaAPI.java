@@ -19,7 +19,12 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.json.JSONObject;
 import org.junit.*;
 
 /**
@@ -28,11 +33,42 @@ import org.junit.*;
  */
 public class MpesaAPI {
 
+    String consumerKey;
+    String consumerSecret;
+
+    public MpesaAPI(String app_key, String app_secret) {
+        consumerKey = app_key;
+        consumerSecret = app_secret;
+    }
+
+    public String authenticate() throws IOException {
+        String app_key = consumerKey ;
+        String app_secret = consumerSecret;
+        String appKeySecret = app_key + ":" + app_secret;
+        byte[] bytes = appKeySecret.getBytes("ISO-8859-1");
+        String encoded = Base64.getEncoder().encodeToString(bytes);
+
+        OkHttpClient client = new OkHttpClient();
+
+        Request request = new Request.Builder()
+                .url("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials")
+                .get()
+                .addHeader("authorization", "Basic " + encoded)
+                .addHeader("cache-control", "no-cache")
+                .build();
+
+        Response response = client.newCall(request).execute();
+        JSONObject jsonObject = new JSONObject(response.body().string());
+        System.out.println("AcessToken Response:"+jsonObject.toString());
+        //System.out.println(jsonObject.getString("access_token"));
+        return jsonObject.getString("access_token");
+    }
+
     @Test
     public void B2C() throws MalformedURLException, IOException {
 
         List<B2CUtils> list = new ArrayList<B2CUtils>();
- 
+
         Connection con = null;
         try {
             con = DBConnector.getMysqlDBConnection();
@@ -56,10 +92,10 @@ public class MpesaAPI {
                 Gson gson = new Gson();
                 String getB2cJson = null;
                 getB2cJson = gson.toJson(b2cUtils);
-                System.out.println("Request:" + getB2cJson);
+                System.out.println("B2C Request:" + getB2cJson);
                 ObjectMapper mapper = new ObjectMapper();
- 
-                String accessToken = "CwYIlxG8e3A2hBVP0HDgT6j8K3hN";
+
+                String accessToken = authenticate();
                 URL obj = new URL("https://sandbox.safaricom.co.ke/mpesa/b2c/v1/paymentrequest");
                 HttpURLConnection postConnection = (HttpURLConnection) obj.openConnection();
                 postConnection.setRequestMethod("POST");
@@ -72,10 +108,10 @@ public class MpesaAPI {
                 os.close();
 
                 int responseCode = postConnection.getResponseCode();
-                System.out.println("ResponseCode:  " + responseCode);
-                System.out.println("ResponseMessage: " + postConnection.getResponseMessage());
-                System.out.println("ContentType:"+postConnection.getContentType());
-                if (responseCode == 200) { //success
+                System.out.println("B2C ResponseCode:  " + responseCode);
+                System.out.println("B2C ResponseMessage: " + postConnection.getResponseMessage());
+                System.out.println("ContentType:" + postConnection.getContentType());
+                if (responseCode >= 200) { //success
                     BufferedReader in = new BufferedReader(new InputStreamReader(
                             postConnection.getInputStream()));
                     String inputLine;
@@ -85,7 +121,7 @@ public class MpesaAPI {
                     }
                     in.close();
                     // print result
-                    System.out.println("Response:"+response.toString());
+                    System.out.println("B2C Response:" + response.toString());
                 } else {
                     System.out.println("Transaction Failed");
                 }

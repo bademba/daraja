@@ -6,6 +6,9 @@
 package com.brian.mpesa.runner;
 
 import com.brian.mpesa.tx.MpesaAPI;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -13,8 +16,12 @@ import com.brian.mpesa.tx.MpesaAPI;
  */
 public class Runner {
     public static void main(String[] args) {
-        MpesaAPI  mpesa = new MpesaAPI();
-        mpesa.B2C();
+        MpesaAPI  mpesa = new MpesaAPI("J1AzjYt6AWZTgPozOxuiJ6vtZj7K1rVx","8NwRt4CtHGHTtxCg");
+        try {
+            mpesa.B2C();
+        } catch (IOException ex) {
+            Logger.getLogger(Runner.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
 }
