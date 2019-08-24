@@ -9,6 +9,7 @@ import com.brian.db.DBConnector;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
 
 /**
  *
@@ -68,13 +70,35 @@ public class STK {
                 httpPost.setHeader("Authorization", "Bearer " + auth.generateAccessToken());
                 CloseableHttpResponse response = httpclient.execute(httpPost);
                 System.out.println(response);
-                //http status code
-                int httpStatusCode =response.getStatusLine().getStatusCode();
-                if (httpStatusCode == 200){
-                    //logic goes gere
-                }
                 HttpEntity entity = response.getEntity();
                 String content = EntityUtils.toString(entity);
+                JSONObject jsonObject = new JSONObject(content);
+                //http status code
+                int httpStatusCode = response.getStatusLine().getStatusCode();
+                if (httpStatusCode == 200) {
+
+                    String merchantRequestId = jsonObject.getString("MerchantRequestID");
+                    String checkoutRequestID = jsonObject.getString("CheckoutRequestID");
+                    int responseCode = jsonObject.getInt("ResponseCode");
+                    String responseDescription = jsonObject.getString("ResponseDescription");
+                    String customerMessage = jsonObject.getString("CustomerMessage");
+                    PreparedStatement ps = null;
+                    String updateStk = "UPDATE daraja set merchantrequestid = ?,checkoutrequestid = ?,responsecode = ? where occassion = ?";
+                    ps = dbConnection.prepareStatement(updateStk);
+                    ps.setString(1, merchantRequestId);
+                    ps.setString(2, checkoutRequestID);
+                    ps.setInt(3, responseCode);
+                    ps.setString(4, resultSet.getString("occassion"));
+                    ps.executeUpdate();
+                    ps.close();
+                } else if (httpStatusCode == 404) {
+                    System.out.println(jsonObject.getString("errorMessage"));
+                } else if (httpStatusCode == 500) {
+                    System.out.println("Server error");
+                } else {
+                    System.out.println("Something went wrong");
+                }
+
                 System.out.println("Response:" + content);
                 httpclient.close();
             }
